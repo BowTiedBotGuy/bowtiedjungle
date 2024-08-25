@@ -1,0 +1,142 @@
+name: Upload functions
+
+on:
+  push:
+    branches: [ main  , dev ]
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      STACK_NAME: 'bowtiedjungle' # default stack
+      FRONT_END_BUCKET: ${{ secrets.FRONT_END_BUCKET }}  # default bucket
+      STAGE: prd
+      APIDOMAINSUFFIX: api
+      USERPOOLID: ${{ secrets.USERPOOL_ID }}
+      COGNITOIDENTITYPOOL: ${{ secrets.COGNITO_IDENTITY_POOL_ID }}
+      USER_POOLS_WEB_CLIENT_ID: ${{ secrets.USER_POOLS_WEB_CLIENT_ID }}
+      DB_USERNAME: ${{ secrets.DB_USERNAME }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_DATABASE: ${{ secrets.DB_DB }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_KEY: ${{ secrets.STRIPE_WEBHOOK_KEY }}
+      STRIPE_CONNECT_WEBHOOK_KEY: ${{ secrets.STRIPE_CONNECT_WEBHOOK_KEY }} 
+      STRIPE_PRODUCT_ID: ${{ secrets.STRIPE_PRODUCT_ID }}
+      STRIPE_COUPON: ${{ secrets.STRIPE_COUPON }}
+      EC2_S3_BUCKET: ${{ secrets.EC2_S3_BUCKET }}
+      EC2_STACK: ${{ secrets.EC2_STACK }}
+      SUBNET_ID: ${{ secrets.SUBNET_ID }}
+      KEY_PAIR_NAME: ${{ secrets.KEY_PAIR_NAME }}
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      SEND_GRID_KEY: ${{ secrets.SEND_GRID_KEY }}
+      TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+      TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+
+    steps:
+    - uses: actions/checkout@main
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        architecture: 'x64'
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-1
+        role-to-assume: ${{ secrets.OPENID }}
+        role-session-name: MySessionName
+    
+
+    - name: Set ENV's based on branch
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+          echo "STACK_NAME=bowtiedjungle-backend-dev" >> $GITHUB_ENV
+          echo "FRONT_END_BUCKET=${{ secrets.FRONT_END_BUCKET_DEV }}" >> $GITHUB_ENV
+          echo "STAGE=dev" >> $GITHUB_ENV
+          echo "APIDOMAINSUFFIX=apidev" >> $GITHUB_ENV
+          echo "USERPOOLID=${{ secrets.USERPOOL_ID_DEV }}" >> $GITHUB_ENV
+          echo "COGNITOIDENTITYPOOL=${{ secrets.COGNITO_IDENTITY_POOL_ID_DEV }}" >> $GITHUB_ENV
+          echo "USER_POOLS_WEB_CLIENT_ID=${{ secrets.USER_POOLS_WEB_CLIENT_ID_DEV }}" >> $GITHUB_ENV
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME_DEV }}" >> $GITHUB_ENV
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}" >> $GITHUB_ENV
+          echo "DB_HOST=${{ secrets.DB_HOST_DEV }}" >> $GITHUB_ENV
+          echo "DB_DATABASE=${{ secrets.DB_DB_DEV }}" >> $GITHUB_ENV
+          echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY_DEV }}" >> $GITHUB_ENV
+          echo "STRIPE_WEBHOOK_KEY=${{ secrets.STRIPE_WEBHOOK_KEY_DEV }}" >> $GITHUB_ENV
+          echo "STRIPE_CONNECT_WEBHOOK_KEY=${{ secrets.STRIPE_CONNECT_WEBHOOK_KEY_DEV }}" >> $GITHUB_ENV
+          echo "STRIPE_PRODUCT_ID=${{ secrets.STRIPE_PRODUCT_ID_DEV }}" >> $GITHUB_ENV
+          echo "STRIPE_COUPON=${{ secrets.STRIPE_COUPON_DEV }}" >> $GITHUB_ENV
+          echo "EC2_S3_BUCKET=${{ secrets.EC2_S3_BUCKET_DEV }}" >> $GITHUB_ENV
+          echo "SUBNET_ID=${{ secrets.SUBNET_ID_DEV }}" >> $GITHUB_ENV
+          echo "KEY_PAIR_NAME=${{ secrets.KEY_PAIR_NAME_DEV }}" >> $GITHUB_ENV
+          echo "TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN_DEV }}" >> $GITHUB_ENV
+        fi
+######## FRONT END #######
+   # Create .env file
+    - name: Set Environment Variables For React
+      run: |
+        cd website
+        echo "REACT_APP_ENV=${{ env.STAGE }}" >> .env
+        echo "REACT_APP_DOMAIN_SUFFIX=${{ env.APIDOMAINSUFFIX }}" >> .env
+        echo "REACT_APP_AWS_USER_POOLS_ID=${{ env.USERPOOLID }}" >> .env
+        echo "REACT_APP_AWS_COGNITO_IDENTITY_POOL_ID=${{ env.COGNITOIDENTITYPOOL }}" >> .env 
+        echo "REACT_APP_AWS_USER_POOLS_WEB_CLIENT_ID=${{ env.USER_POOLS_WEB_CLIENT_ID }}" >> .env
+
+    - name: Install dependencies
+      run: |
+        cd website
+        npm install
+
+    - name: Install Amplify CLI
+      run: |
+        cd website
+        npm install -g @aws-amplify/cli
+
+    - name: Build folder
+      run: |
+        cd website
+        npm run build
+
+    - name: Copy files to frontend site
+      run: |
+        cd website
+        aws s3 sync './build' ${{ env.FRONT_END_BUCKET }}
+
+#### SERVER / BACKEND #####    
+    - name: Create Telegram .env file
+      run: |
+        echo "db_username=${{ env.DB_USERNAME }}" >> backend/functions/src/telegram/.env
+        echo "db_password=${{ env.DB_PASSWORD }}" >> backend/functions/src/telegram/.env
+        echo "db_host=${{ env.DB_HOST }}" >> backend/functions/src/telegram/.env
+        echo "db_database=${{ env.DB_DATABASE }}" >> backend/functions/src/telegram/.env 
+        echo "telegram_token=${{ env.TELEGRAM_TOKEN }}" >> backend/functions/src/telegram/.env
+        echo "stage=${{ env.STAGE }}" >> backend/functions/src/telegram/.env
+        echo "twilio_account_sid=${{ env.TWILIO_ACCOUNT_SID }}" >> backend/functions/src/telegram/.env
+        echo "twilio_auth_token=${{ env.TWILIO_AUTH_TOKEN }}" >> backend/functions/src/telegram/.env
+
+    - name: Setup AWS SAM CLI
+      uses: aws-actions/setup-sam@v2
+      with:
+          use-installer: true
+
+    - name: Copy files to telegram bucket
+      run:
+        aws s3 sync  backend/functions/src/telegram ${{ env.EC2_S3_BUCKET }}
+      
+    - name: SAM build us-east-1
+      run: sam build --template './backend/functions/template.yml'
+    
+    - name: SAM Package
+      run: sam package --template-file .aws-sam/build/template.yaml --s3-bucket bowtiedjungle-backend --output-template-file sam-packaged.yaml
+    
+    - name: SAM deploy us-east-1
+      run: sam deploy --stack-name ${{ env.STACK_NAME }} --parameter-overrides "TELEGRAMTOKEN=${{ env.TELEGRAM_TOKEN }}" "SENDGRIDKEY=${{ env.SEND_GRID_KEY }}" "EC2S3BUCKET=${{ env.EC2_S3_BUCKET }}" "SUBNETID=${{ env.SUBNET_ID }}" "KEYPAIRNAME=${{ env.KEY_PAIR_NAME }}" "DBUSERNAME=${{ env.DB_USERNAME }}" "DBPASSWORD=${{ env.DB_PASSWORD }}" "DBHOST=${{ env.DB_HOST }}" "DBDATABASE=${{ env.DB_DATABASE }}" "STRIPESECRETKEY=${{ env.STRIPE_SECRET_KEY }}" "STRIPEWEBHOOKKEY=${{ env.STRIPE_WEBHOOK_KEY }}" "STRIPECONNECTWEBHOOKKEY=${{ env.STRIPE_CONNECT_WEBHOOK_KEY }}" "STRIPEPRODUCTID=${{ env.STRIPE_PRODUCT_ID }}" "STRIPECOUPON=${{ env.STRIPE_COUPON }}" "USERPOOLID=${{ env.USERPOOLID }}" "APIDOMAINSUFFIX=${{ env.APIDOMAINSUFFIX }}" "STAGE=${{ env.STAGE }}"  "HOSTEDZONEID=${{ secrets.HOSTEDZONEID }}" "CERTIFICATEARN=${{ secrets.CERTIFICATEARN}}" --template-file sam-packaged.yaml --s3-bucket bowtiedjungle-backend --region us-east-1 --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
