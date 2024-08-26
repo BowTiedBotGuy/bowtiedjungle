@@ -144,25 +144,25 @@ jobs:
         aws s3 sync './build' ${{ env.FRONT_END_APP_BUCKET }}
 
 #### SERVER / BACKEND #####    
-    - name: Create Telegram .env file
-      run: |
-        echo "db_username=${{ env.DB_USERNAME }}" >> backend/functions/src/telegram/.env
-        echo "db_password=${{ env.DB_PASSWORD }}" >> backend/functions/src/telegram/.env
-        echo "db_host=${{ env.DB_HOST }}" >> backend/functions/src/telegram/.env
-        echo "db_database=${{ env.DB_DATABASE }}" >> backend/functions/src/telegram/.env 
-        echo "telegram_token=${{ env.TELEGRAM_TOKEN }}" >> backend/functions/src/telegram/.env
-        echo "stage=${{ env.STAGE }}" >> backend/functions/src/telegram/.env
-        echo "twilio_account_sid=${{ env.TWILIO_ACCOUNT_SID }}" >> backend/functions/src/telegram/.env
-        echo "twilio_auth_token=${{ env.TWILIO_AUTH_TOKEN }}" >> backend/functions/src/telegram/.env
+    # - name: Create Telegram .env file
+    #   run: |
+    #     echo "db_username=${{ env.DB_USERNAME }}" >> backend/functions/src/telegram/.env
+    #     echo "db_password=${{ env.DB_PASSWORD }}" >> backend/functions/src/telegram/.env
+    #     echo "db_host=${{ env.DB_HOST }}" >> backend/functions/src/telegram/.env
+    #     echo "db_database=${{ env.DB_DATABASE }}" >> backend/functions/src/telegram/.env 
+    #     echo "telegram_token=${{ env.TELEGRAM_TOKEN }}" >> backend/functions/src/telegram/.env
+    #     echo "stage=${{ env.STAGE }}" >> backend/functions/src/telegram/.env
+    #     echo "twilio_account_sid=${{ env.TWILIO_ACCOUNT_SID }}" >> backend/functions/src/telegram/.env
+    #     echo "twilio_auth_token=${{ env.TWILIO_AUTH_TOKEN }}" >> backend/functions/src/telegram/.env
 
     - name: Setup AWS SAM CLI
       uses: aws-actions/setup-sam@v2
       with:
           use-installer: true
 
-    - name: Copy files to telegram bucket
-      run:
-        aws s3 sync  backend/functions/src/telegram ${{ env.EC2_S3_BUCKET }}
+    # - name: Copy files to telegram bucket
+    #   run:
+    #     aws s3 sync  backend/functions/src/telegram ${{ env.EC2_S3_BUCKET }}
       
     - name: SAM build us-east-1
       run: sam build --template './backend/functions/template.yml'
