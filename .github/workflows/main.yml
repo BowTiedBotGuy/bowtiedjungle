@@ -85,6 +85,7 @@ jobs:
    # Create .env file
     - name: Set Environment Variables For React
       run: |
+        ls
         cd website/landingpage
         echo "REACT_APP_ENV=${{ env.STAGE }}" >> .env
         echo "REACT_APP_DOMAIN_SUFFIX=${{ env.APIDOMAINSUFFIX }}" >> .env
