@@ -95,32 +95,32 @@ Resources:
 ######## API CALLS #########
   LatestSubstackPosts:
     Type: AWS::Serverless::Function
-      Properties:
-        CodeUri: src/
-        FunctionName: !Sub "bowtiedsubstacks_${STAGE}"
-        Handler: latest_substacks.lambda_handler
-        Runtime: python3.10
-        Architectures: 
-          - x86_64
-        Description: List out most recent substack posts
-        Layers:
-          - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
-          - arn:aws:lambda:us-east-1:360548816597:layer:requests-2-31-0-py310-x86:1 
-          - arn:aws:lambda:us-east-1:360548816597:layer:feedparser-6-0-11-py310-x86:1
-        Environment:
-          Variables:
-            db_username: !Ref DBUSERNAME
-            db_password: !Ref DBPASSWORD
-            db_host: !Ref DBHOST
-            db_database: !Ref DBDATABASE
-        Events:
-          ApiEvent:
-            Type: Api
-            Properties:
-              RestApiId:
-                Ref: ApiGatewayBackend
-              Path: /posts
-              Method: get 
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "bowtiedsubstacks_${STAGE}"
+      Handler: latest_substacks.lambda_handler
+      Runtime: python3.10
+      Architectures: 
+        - x86_64
+      Description: List out most recent substack posts
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
+        - arn:aws:lambda:us-east-1:360548816597:layer:requests-2-31-0-py310-x86:1 
+        - arn:aws:lambda:us-east-1:360548816597:layer:feedparser-6-0-11-py310-x86:1
+      Environment:
+        Variables:
+          db_username: !Ref DBUSERNAME
+          db_password: !Ref DBPASSWORD
+          db_host: !Ref DBHOST
+          db_database: !Ref DBDATABASE
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayBackend
+            Path: /posts
+            Method: get 
 
 
   ServerlessTelegramBot:
