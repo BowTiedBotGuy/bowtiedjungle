@@ -10,7 +10,7 @@ const Hero = () => {
             <ul>
               <li>Showcase your products/services</li>
               <li>Meet new BowTied's for business/friends</li>
-              <li>Research products and find what you're looking for</li>
+              <li>Research products/services and find what you're looking for</li>
             </ul>
           </div>
       </div>
