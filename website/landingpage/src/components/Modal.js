@@ -21,9 +21,9 @@ const Modal = ({ isOpen, closeModal }) => {
           <div className="features">
             <h3>Features</h3>
             <ul>
-              <li>Access to detailed analytics</li>
-              <li>Exclusive member content</li>
-              <li>Direct support from experts</li>
+              <li>Showcase your products/services</li>
+              <li>Meet new BowTied's for business/friends</li>
+              <li>Research products and find what you're looking for</li>
             </ul>
           </div>
           <div className="divider"></div>

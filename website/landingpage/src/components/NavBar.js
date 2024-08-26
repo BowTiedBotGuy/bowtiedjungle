@@ -35,11 +35,12 @@ const Navbar = () => {
             <button type="submit" className="search-button">Search</button>
           </form>
           <div>
-            <a href="/about" className="ml-4">About</a>
             {/* Use button instead of <a> for non-navigation actions */}
             <a href="/billing" className="ml-4">Billing</a>
-            <button onClick={() => setModalOpen(true)} className="ml-4 bg-transparent border-none text-white cursor-pointer">
-              Shill
+            <button
+            onClick={() => setModalOpen(true)}
+            className="ml-4 bg-red-500 text-white cursor-pointer py-2 px-4 rounded">
+            Sign Up
             </button>
           </div>
         </div>
