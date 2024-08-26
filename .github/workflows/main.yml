@@ -112,7 +112,7 @@ jobs:
         cd website/landingpage
         aws s3 sync './build' ${{ env.FRONT_END_LANDING_PAGE_BUCKET }}
 
-######## FRONT END LANDINGPAGE #######
+######## FRONT END APP #######
    # Create .env file
     - name: Set Environment Variables For React
       run: |
@@ -123,7 +123,7 @@ jobs:
         echo "REACT_APP_AWS_COGNITO_IDENTITY_POOL_ID=${{ env.COGNITOIDENTITYPOOL }}" >> .env 
         echo "REACT_APP_AWS_USER_POOLS_WEB_CLIENT_ID=${{ env.USER_POOLS_WEB_CLIENT_ID }}" >> .env
 
-    - name: Install dependencies landing page
+    - name: Install dependencies app page
       run: |
         cd website/app
         npm install
