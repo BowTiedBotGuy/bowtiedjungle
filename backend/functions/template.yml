@@ -360,46 +360,46 @@ Resources:
             Resource:
               - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
   
-  StripeGetPrices:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/
-      FunctionName: !Sub "stripe_seller_get_prices_${STAGE}"
-      Handler: stripe_get_prices.lambda_handler
-      Runtime: python3.10
-      Architectures: 
-        - x86_64
-      Description: Gets the prices and id's of each
-      Layers:
-        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1 
-      Environment:
-        Variables:
-          stripe_secret_key: !Ref STRIPESECRETKEY
-          stripe_product_id: !Ref STRIPEPRODUCTID
-      Events:
-        ApiEvent:
-          Type: Api
-          Properties:
-            RestApiId:
-              Ref: ApiGatewayBackend
-            Path: /get_prices
-            Method: get
-            Auth:
-              AddDefaultAuthorizerToCorsPreflight: false
-              Authorizer: CognitoAuthorizer
-      Policies:
-        Statement:
-          - Effect: Allow
-            Action: 
-              - logs:CreateLogGroup
-            Resource: 
-              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
-          - Effect: Allow
-            Action:
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource:
-              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+  # StripeGetPrices:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: src/
+  #     FunctionName: !Sub "stripe_seller_get_prices_${STAGE}"
+  #     Handler: stripe_get_prices.lambda_handler
+  #     Runtime: python3.10
+  #     Architectures: 
+  #       - x86_64
+  #     Description: Gets the prices and id's of each
+  #     Layers:
+  #       - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1 
+  #     Environment:
+  #       Variables:
+  #         stripe_secret_key: !Ref STRIPESECRETKEY
+  #         stripe_product_id: !Ref STRIPEPRODUCTID
+  #     Events:
+  #       ApiEvent:
+  #         Type: Api
+  #         Properties:
+  #           RestApiId:
+  #             Ref: ApiGatewayBackend
+  #           Path: /get_prices
+  #           Method: get
+  #           Auth:
+  #             AddDefaultAuthorizerToCorsPreflight: false
+  #             Authorizer: CognitoAuthorizer
+  #     Policies:
+  #       Statement:
+  #         - Effect: Allow
+  #           Action: 
+  #             - logs:CreateLogGroup
+  #           Resource: 
+  #             - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+  #         - Effect: Allow
+  #           Action:
+  #             - logs:CreateLogStream
+  #             - logs:PutLogEvents
+  #           Resource:
+  #             - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
 
 
   StripeCreatePromo:
