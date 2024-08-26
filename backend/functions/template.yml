@@ -1,0 +1,494 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: "SAM template for backend and related functions"
+
+Globals:
+  Function:
+    Timeout: 60
+    Tracing: PassThrough
+  Api:
+    Cors: 
+      AllowMethods: "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
+      AllowHeaders: "'Accept-Encoding,Content-Encoding,Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,Client-ID,key,secret,session'"
+      AllowOrigin: "'*'"
+
+Parameters:
+  HOSTEDZONEID:
+    Type: String
+  CERTIFICATEARN:
+    Type: String
+  STAGE:
+    Type: String
+  APIDOMAINSUFFIX:
+    Type: String
+  USERPOOLID:
+    Type: String
+  DBUSERNAME:
+    Type: String
+  DBPASSWORD:
+    Type: String
+  DBHOST:
+    Type: String
+  DBDATABASE:
+    Type: String
+  STRIPESECRETKEY:
+    Type: String
+  STRIPEWEBHOOKKEY:
+    Type: String
+  STRIPECONNECTWEBHOOKKEY:
+    Type: String
+  STRIPEPRODUCTID:
+    Type: String
+  STRIPECOUPON:
+    Type: String
+  
+
+Conditions:
+  IsProd: !Equals [ !Ref STAGE, prd ]
+
+Resources:
+  # define api gateway
+  ApiGatewayBackend:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref STAGE
+      Name: !Sub "bowtiedlist_api_${STAGE}"
+      Auth:
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${USERPOOLID}"
+  
+  ApiGatewayStripe:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref STAGE
+      Name: !Sub "stripe_handler_${STAGE}"
+    
+  ApiDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !Sub "${APIDOMAINSUFFIX}.bowtiedlist.com"
+      CertificateArn:
+        Ref: CERTIFICATEARN
+
+  APIMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: ApiDomain
+    Properties: 
+      DomainName: !Sub "${APIDOMAINSUFFIX}.bowtiedlist.com"
+      RestApiId: !Ref ApiGatewayBackend
+      Stage: !Ref STAGE
+
+  Route53RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !Sub "${APIDOMAINSUFFIX}.bowtiedlist.com"
+      Type: A
+      HostedZoneId: 
+        Ref: HOSTEDZONEID
+      AliasTarget:
+        DNSName: !GetAtt ApiDomain.DistributionDomainName
+        EvaluateTargetHealth: false
+        HostedZoneId: !GetAtt ApiDomain.DistributionHostedZoneId
+
+######## API CALLS #########
+  ServerlessTelegramBot:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "bowtiedlist_${STAGE}"
+      Handler: get_members.lambda_handler
+      Runtime: python3.10
+      Architectures: 
+        - x86_64
+      Description: List out activate members of bowtied list who have signed up
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
+        - arn:aws:lambda:us-east-1:360548816597:layer:requests-2-31-0-py310-x86:1 
+      Environment:
+        Variables:
+          db_username: !Ref DBUSERNAME
+          db_password: !Ref DBPASSWORD
+          db_host: !Ref DBHOST
+          db_database: !Ref DBDATABASE
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayBackend
+            Path: /members
+            Method: post
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action: 
+              - logs:CreateLogGroup
+            Resource: 
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+
+######## STRIPE ###########
+  StripeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "stripe_endpoint_${STAGE}"
+      Handler: stripe_webhook.lambda_handler
+      Runtime: python3.10
+      Environment:
+        Variables:
+          db_username: !Ref DBUSERNAME
+          db_password: !Ref DBPASSWORD
+          db_host: !Ref DBHOST
+          db_database: !Ref DBDATABASE
+          stripe_secret_key: !Ref STRIPESECRETKEY
+          stripe_webhook_key: !Ref STRIPEWEBHOOKKEY
+          send_grid_key: !Ref SENDGRIDKEY
+          user_pool_id: !Ref USERPOOLID
+      Architectures: 
+        - x86_64
+      Description: Stripe Webhook To Update DB
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1
+        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
+        - arn:aws:lambda:us-east-1:360548816597:layer:sendgrid-6-10-0-py310-x86:1
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayStripe
+            Path: /webhook
+            Method: post
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action: 
+              - logs:CreateLogGroup
+            Resource: 
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+          - Effect: Allow
+            Action:
+              - cognito-idp:AdminUpdateUserAttributes
+            Resource:
+              - !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${USERPOOLID}"
+
+  StripeSellerInfo:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "stripe_seller_info_${STAGE}"
+      Handler: stripe_seller_info.lambda_handler
+      Runtime: python3.10
+      Environment:
+        Variables:
+          db_username: !Ref DBUSERNAME
+          db_password: !Ref DBPASSWORD
+          db_host: !Ref DBHOST
+          db_database: !Ref DBDATABASE
+      Architectures: 
+        - x86_64
+      Description: Grabs information on the seller
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayBackend
+            Path: /connect_info
+            Method: get
+            Auth:
+              AddDefaultAuthorizerToCorsPreflight: false
+              Authorizer: CognitoAuthorizer
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action: 
+              - logs:CreateLogGroup
+            Resource: 
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+
+  StripeConnectWebhook:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "stripe_connect_wh_${STAGE}"
+      Handler: stripe_connect_webhook.lambda_handler
+      Runtime: python3.10
+      Environment:
+        Variables:
+          db_username: !Ref DBUSERNAME
+          db_password: !Ref DBPASSWORD
+          db_host: !Ref DBHOST
+          db_database: !Ref DBDATABASE
+          stripe_secret_key: !Ref STRIPESECRETKEY
+          stripe_webhook_key: !Ref STRIPECONNECTWEBHOOKKEY
+          user_pool_id: !Ref USERPOOLID
+      Architectures: 
+        - x86_64
+      Description: Stripe Webhook To Update Cognito For Sellers
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1
+        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayStripe
+            Path: /connect_webhook
+            Method: post
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action: 
+              - logs:CreateLogGroup
+            Resource: 
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+          - Effect: Allow
+            Action:
+              - cognito-idp:AdminUpdateUserAttributes
+            Resource:
+              - !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${USERPOOLID}"
+
+######## STRIPE SELLERS ###########
+  CreateStripeSeller:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "stripe_seller_create_account_${STAGE}"
+      Handler: stripe_create_account.lambda_handler
+      Runtime: python3.10
+      Architectures: 
+        - x86_64
+      Description: Creates a stripe express account and returns account link
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1 
+      Environment:
+        Variables:
+          stage: !Ref STAGE
+          stripe_secret_key: !Ref STRIPESECRETKEY
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayBackend
+            Path: /createseller
+            Method: post
+            Auth:
+              AddDefaultAuthorizerToCorsPreflight: false
+              Authorizer: CognitoAuthorizer
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action: 
+              - logs:CreateLogGroup
+            Resource: 
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+
+  ManageStripeSeller:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "stripe_seller_manage_account_${STAGE}"
+      Handler: stripe_connect_login.lambda_handler
+      Runtime: python3.10
+      Architectures: 
+        - x86_64
+      Description: Gives the account a url to manage their account
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1 
+      Environment:
+        Variables:
+          stripe_secret_key: !Ref STRIPESECRETKEY
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayBackend
+            Path: /manageseller
+            Method: post
+            Auth:
+              AddDefaultAuthorizerToCorsPreflight: false
+              Authorizer: CognitoAuthorizer
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action: 
+              - logs:CreateLogGroup
+            Resource: 
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+  
+  StripeGetPrices:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "stripe_seller_get_prices_${STAGE}"
+      Handler: stripe_get_prices.lambda_handler
+      Runtime: python3.10
+      Architectures: 
+        - x86_64
+      Description: Gets the prices and id's of each
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1 
+      Environment:
+        Variables:
+          stripe_secret_key: !Ref STRIPESECRETKEY
+          stripe_product_id: !Ref STRIPEPRODUCTID
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayBackend
+            Path: /get_prices
+            Method: get
+            Auth:
+              AddDefaultAuthorizerToCorsPreflight: false
+              Authorizer: CognitoAuthorizer
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action: 
+              - logs:CreateLogGroup
+            Resource: 
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+
+
+  StripeCreatePromo:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "stripe_seller_create_promo_${STAGE}"
+      Handler: stripe_create_promo.lambda_handler
+      Runtime: python3.10
+      Architectures: 
+        - x86_64
+      Description: Creates a promo code
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1
+        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1 
+      Environment:
+        Variables:
+          stripe_secret_key: !Ref STRIPESECRETKEY
+          stripe_coupon: !Ref STRIPECOUPON
+          db_username: !Ref DBUSERNAME
+          db_password: !Ref DBPASSWORD
+          db_host: !Ref DBHOST
+          db_database: !Ref DBDATABASE
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayBackend
+            Path: /create_promo
+            Method: post
+            Auth:
+              AddDefaultAuthorizerToCorsPreflight: false
+              Authorizer: CognitoAuthorizer
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action: 
+              - logs:CreateLogGroup
+            Resource: 
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+
+  StripeCreatePaymentLink:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "stripe_seller_create_payment_link_${STAGE}"
+      Handler: stripe_create_payment_link.lambda_handler
+      Runtime: python3.10
+      Architectures: 
+        - x86_64
+      Description: Creates the payment link for the price
+      Layers:
+        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1
+        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1 
+      Environment:
+        Variables:
+          db_username: !Ref DBUSERNAME
+          db_password: !Ref DBPASSWORD
+          db_host: !Ref DBHOST
+          db_database: !Ref DBDATABASE
+          stripe_secret_key: !Ref STRIPESECRETKEY
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayBackend
+            Path: /create_payment_link
+            Method: post
+            Auth:
+              AddDefaultAuthorizerToCorsPreflight: false
+              Authorizer: CognitoAuthorizer
+      Policies:
+        Statement:
+          - Effect: Allow
+            Action: 
+              - logs:CreateLogGroup
+            Resource: 
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
