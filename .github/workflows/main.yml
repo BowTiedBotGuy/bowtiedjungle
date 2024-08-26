@@ -94,8 +94,7 @@ jobs:
 
     - name: Install dependencies landing page
       run: |
-        cd website
-        ls
+        cd website/landingpage
         npm install
 
     - name: Install Amplify CLI
