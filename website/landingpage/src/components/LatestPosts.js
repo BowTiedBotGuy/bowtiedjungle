@@ -1,28 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import API from '../services/API';
+import BlogPostsCarousel from './BlogPostsCarousel';
+import LoadingBar from './LoadingBar';  // Assuming you create this component
 
 const LatestPosts = () => {
+    const [posts, setPosts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);  // Add a loading state
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await API.get('/posts'); // Adjust the method if needed
-                console.log(response.data);
+                setIsLoading(true);  // Set loading to true before fetching data
+                const response = await API.get('/posts');
+                setPosts(response.data);  // Assume response is the array of posts
             } catch (error) {
                 console.error('Error fetching data: ', error);
+            } finally {
+                setIsLoading(false);  // Set loading to false after fetching data
             }
         };
 
         fetchData();
-    }, []); // The empty array ensures this effect runs only once after the initial render
+    }, []);
 
     return (
         <div>
-            {/* Render your component UI here */}
+            {isLoading || posts.length === 0 ? <LoadingBar /> : <BlogPostsCarousel posts={posts} />}
         </div>
     );
 };
 
 export default LatestPosts;
-
-
-

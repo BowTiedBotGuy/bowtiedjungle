@@ -13,8 +13,7 @@ def lambda_handler(event,context):
         for url in rawrss:
             feed = feedparser.parse(url)
             for post in feed.entries:
-                posts.append({'title': post.title, 'link': post.link, 'summary': post.summary, 'detail': post.summary_detail, 'published': post.published})
-
+                posts.append({'id':post.id,'title': post.title, 'link': post.link, 'summary': post.summary, 'detail': post.summary_detail, 'published': post.published})
         
         return {
                 'statusCode': 200,
@@ -28,4 +27,5 @@ def lambda_handler(event,context):
         }
 
 
-
+if __name__ == '__main__':
+    lambda_handler({},{})
