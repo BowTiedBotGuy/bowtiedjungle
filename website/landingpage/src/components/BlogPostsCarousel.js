@@ -12,7 +12,7 @@ const BlogPostsCarousel = ({ posts }) => {
             {
                 breakpoint: 1024, // Adjust breakpoint for vertical view
                 settings: {
-                    slidesToShow: 1,
+                    slidesToShow: 4,
                     slidesToScroll: 1,
                     infinite: true,
                     dots: true

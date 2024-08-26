@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Modal from './Modal';
 
-// css
+// CSS
 import '../Search.css'; 
 
 const Navbar = () => {
@@ -14,16 +15,18 @@ const Navbar = () => {
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
-    // Implement search logic or redirect to a search page with the query
     console.log("Searching for:", searchInput);
-    // Redirect or update state with search results
+    // Additional logic to handle search submit
   };
 
   return (
     <>
       <nav className="bg-gray-800 text-white p-4">
         <div className="container mx-auto flex justify-between items-center">
-          <a href="/" className="text-lg font-bold">BowTiedList</a>
+          <div>
+            <Link to="/" className="text-lg font-bold mr-4">BowTiedList</Link>
+            <Link to="/spreadsheet" className="text-lg font-bold mr-4">Spreadsheet</Link>
+          </div>
           <form onSubmit={handleSearchSubmit} className="search-form">
             <input
               type="text"
@@ -35,12 +38,10 @@ const Navbar = () => {
             <button type="submit" className="search-button">Search</button>
           </form>
           <div>
-            {/* Use button instead of <a> for non-navigation actions */}
-            <a href="/billing" className="ml-4">Billing</a>
             <button
-            onClick={() => setModalOpen(true)}
-            className="ml-4 bg-red-500 text-white cursor-pointer py-2 px-4 rounded">
-            Sign Up
+              onClick={() => setModalOpen(true)}
+              className="ml-4 bg-red-500 text-white cursor-pointer py-2 px-4 rounded">
+              Sign Up
             </button>
           </div>
         </div>
