@@ -135,56 +135,56 @@ Resources:
               - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
 
 ######## STRIPE ###########
-  StripeFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: src/
-      FunctionName: !Sub "stripe_endpoint_${STAGE}"
-      Handler: stripe_webhook.lambda_handler
-      Runtime: python3.10
-      Environment:
-        Variables:
-          db_username: !Ref DBUSERNAME
-          db_password: !Ref DBPASSWORD
-          db_host: !Ref DBHOST
-          db_database: !Ref DBDATABASE
-          stripe_secret_key: !Ref STRIPESECRETKEY
-          stripe_webhook_key: !Ref STRIPEWEBHOOKKEY
-          send_grid_key: !Ref SENDGRIDKEY
-          user_pool_id: !Ref USERPOOLID
-      Architectures: 
-        - x86_64
-      Description: Stripe Webhook To Update DB
-      Layers:
-        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1
-        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
-        - arn:aws:lambda:us-east-1:360548816597:layer:sendgrid-6-10-0-py310-x86:1
-      Events:
-        ApiEvent:
-          Type: Api
-          Properties:
-            RestApiId:
-              Ref: ApiGatewayStripe
-            Path: /webhook
-            Method: post
-      Policies:
-        Statement:
-          - Effect: Allow
-            Action: 
-              - logs:CreateLogGroup
-            Resource: 
-              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
-          - Effect: Allow
-            Action:
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource:
-              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
-          - Effect: Allow
-            Action:
-              - cognito-idp:AdminUpdateUserAttributes
-            Resource:
-              - !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${USERPOOLID}"
+  # StripeFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: src/
+  #     FunctionName: !Sub "stripe_endpoint_${STAGE}"
+  #     Handler: stripe_webhook.lambda_handler
+  #     Runtime: python3.10
+  #     Environment:
+  #       Variables:
+  #         db_username: !Ref DBUSERNAME
+  #         db_password: !Ref DBPASSWORD
+  #         db_host: !Ref DBHOST
+  #         db_database: !Ref DBDATABASE
+  #         stripe_secret_key: !Ref STRIPESECRETKEY
+  #         stripe_webhook_key: !Ref STRIPEWEBHOOKKEY
+  #         send_grid_key: !Ref SENDGRIDKEY
+  #         user_pool_id: !Ref USERPOOLID
+  #     Architectures: 
+  #       - x86_64
+  #     Description: Stripe Webhook To Update DB
+  #     Layers:
+  #       - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1
+  #       - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
+  #       - arn:aws:lambda:us-east-1:360548816597:layer:sendgrid-6-10-0-py310-x86:1
+  #     Events:
+  #       ApiEvent:
+  #         Type: Api
+  #         Properties:
+  #           RestApiId:
+  #             Ref: ApiGatewayStripe
+  #           Path: /webhook
+  #           Method: post
+  #     Policies:
+  #       Statement:
+  #         - Effect: Allow
+  #           Action: 
+  #             - logs:CreateLogGroup
+  #           Resource: 
+  #             - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+  #         - Effect: Allow
+  #           Action:
+  #             - logs:CreateLogStream
+  #             - logs:PutLogEvents
+  #           Resource:
+  #             - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+  #         - Effect: Allow
+  #           Action:
+  #             - cognito-idp:AdminUpdateUserAttributes
+  #           Resource:
+  #             - !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${USERPOOLID}"
 
   StripeSellerInfo:
     Type: AWS::Serverless::Function

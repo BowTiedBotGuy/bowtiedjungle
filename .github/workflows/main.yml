@@ -99,11 +99,6 @@ jobs:
         cd website/landingpage
         npm install
 
-    - name: Install Amplify CLI
-      run: |
-        cd website/landingpage
-        npm install -g @aws-amplify/cli
-
     - name: Build folder
       run: |
         cd website/landingpage
