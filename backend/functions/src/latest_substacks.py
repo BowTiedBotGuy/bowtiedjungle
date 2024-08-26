@@ -13,7 +13,7 @@ def lambda_handler(event,context):
         for url in rawrss:
             feed = feedparser.parse(url)
             for post in feed.entries:
-                posts.append((post.title, post.link, post.summary, post.summary_detail, post.content, post.published))
+                posts.append(post)
 
         
         return {
