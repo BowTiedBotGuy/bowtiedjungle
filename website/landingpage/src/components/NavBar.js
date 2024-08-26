@@ -1,14 +1,39 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 
+// css
+import '../Search.css'; 
+
 const Navbar = () => {
   const [isModalOpen, setModalOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+
+  const handleSearchChange = (event) => {
+    setSearchInput(event.target.value);
+  };
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    // Implement search logic or redirect to a search page with the query
+    console.log("Searching for:", searchInput);
+    // Redirect or update state with search results
+  };
 
   return (
     <>
       <nav className="bg-gray-800 text-white p-4">
         <div className="container mx-auto flex justify-between items-center">
-          <a href="/" className="text-lg font-bold">Site Name</a>
+          <a href="/" className="text-lg font-bold">BowTiedList</a>
+          <form onSubmit={handleSearchSubmit} className="search-form">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={handleSearchChange}
+              placeholder="Search categories/members"
+              className="search-input"
+            />
+            <button type="submit" className="search-button">Search</button>
+          </form>
           <div>
             <a href="/about" className="ml-4">About</a>
             {/* Use button instead of <a> for non-navigation actions */}
