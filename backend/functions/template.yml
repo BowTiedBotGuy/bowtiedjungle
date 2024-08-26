@@ -21,8 +21,8 @@ Parameters:
     Type: String
   APIDOMAINSUFFIX:
     Type: String
-  USERPOOLID:
-    Type: String
+  # USERPOOLID:
+  #   Type: String
   DBUSERNAME:
     Type: String
   DBPASSWORD:
@@ -33,14 +33,14 @@ Parameters:
     Type: String
   STRIPESECRETKEY:
     Type: String
-  STRIPEWEBHOOKKEY:
-    Type: String
-  STRIPECONNECTWEBHOOKKEY:
-    Type: String
-  STRIPEPRODUCTID:
-    Type: String
-  STRIPECOUPON:
-    Type: String
+  # STRIPEWEBHOOKKEY:
+  #   Type: String
+  # STRIPECONNECTWEBHOOKKEY:
+  #   Type: String
+  # STRIPEPRODUCTID:
+  #   Type: String
+  # STRIPECOUPON:
+  #   Type: String
   
 
 Conditions:
