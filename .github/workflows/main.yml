@@ -85,7 +85,6 @@ jobs:
    # Create .env file
     - name: Set Environment Variables For React
       run: |
-        ls
         cd website/landingpage
         echo "REACT_APP_ENV=${{ env.STAGE }}" >> .env
         echo "REACT_APP_DOMAIN_SUFFIX=${{ env.APIDOMAINSUFFIX }}" >> .env
@@ -95,7 +94,8 @@ jobs:
 
     - name: Install dependencies landing page
       run: |
-        cd website/landingpage
+        cd website
+        ls
         npm install
 
     - name: Install Amplify CLI
