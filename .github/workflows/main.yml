@@ -14,7 +14,8 @@ jobs:
     env:
       STACK_NAME: 'bowtiedjungle' # default stack
       FRONT_END_LANDING_PAGE_BUCKET: ${{ secrets.FRONT_END_LANDING_PAGE_BUCKET }}  # landing page
-      FRONT_END_APP_BUCKET: ${{ secrets.FRONT_END_APP_BUCKET }} 
+      FRONT_END_APP_BUCKET: ${{ secrets.FRONT_END_APP_BUCKET }}
+      BACK_END_BUCKET: ${{ secrets.BACKEND_BUCKET }} 
       STAGE: prd
       APIDOMAINSUFFIX: api
       USERPOOLID: ${{ secrets.USERPOOL_ID }}
@@ -62,6 +63,7 @@ jobs:
         if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
           echo "STACK_NAME=bowtiedjungle-backend-dev" >> $GITHUB_ENV
           echo "FRONT_END_BUCKET=${{ secrets.FRONT_END_APP_BUCKET_DEV }}" >> $GITHUB_ENV
+          echo "BACKEND_BUCKET"=${{ secrets.BACKEND_BUCKET_DEV }}"" >> $GITHUB_ENV
           echo "STAGE=dev" >> $GITHUB_ENV
           echo "APIDOMAINSUFFIX=apidev" >> $GITHUB_ENV
           echo "USERPOOLID=${{ secrets.USERPOOL_ID_DEV }}" >> $GITHUB_ENV
@@ -168,7 +170,7 @@ jobs:
       run: sam build --template './backend/functions/template.yml'
     
     - name: SAM Package
-      run: sam package --template-file .aws-sam/build/template.yaml --s3-bucket bowtiedjungle-backend --output-template-file sam-packaged.yaml
+      run: sam package --template-file .aws-sam/build/template.yaml --s3-bucket ${{ env.BACKEND_BUCKET }} --output-template-file sam-packaged.yaml
     
     - name: SAM deploy us-east-1
       run: sam deploy --stack-name ${{ env.STACK_NAME }} --parameter-overrides "TELEGRAMTOKEN=${{ env.TELEGRAM_TOKEN }}" "SENDGRIDKEY=${{ env.SEND_GRID_KEY }}" "EC2S3BUCKET=${{ env.EC2_S3_BUCKET }}" "SUBNETID=${{ env.SUBNET_ID }}" "KEYPAIRNAME=${{ env.KEY_PAIR_NAME }}" "DBUSERNAME=${{ env.DB_USERNAME }}" "DBPASSWORD=${{ env.DB_PASSWORD }}" "DBHOST=${{ env.DB_HOST }}" "DBDATABASE=${{ env.DB_DATABASE }}" "STRIPESECRETKEY=${{ env.STRIPE_SECRET_KEY }}" "STRIPEWEBHOOKKEY=${{ env.STRIPE_WEBHOOK_KEY }}" "STRIPECONNECTWEBHOOKKEY=${{ env.STRIPE_CONNECT_WEBHOOK_KEY }}" "STRIPEPRODUCTID=${{ env.STRIPE_PRODUCT_ID }}" "STRIPECOUPON=${{ env.STRIPE_COUPON }}" "USERPOOLID=${{ env.USERPOOLID }}" "APIDOMAINSUFFIX=${{ env.APIDOMAINSUFFIX }}" "STAGE=${{ env.STAGE }}"  "HOSTEDZONEID=${{ secrets.HOSTEDZONEID }}" "CERTIFICATEARN=${{ secrets.CERTIFICATEARN}}" --template-file sam-packaged.yaml --s3-bucket bowtiedjungle-backend --region us-east-1 --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset
