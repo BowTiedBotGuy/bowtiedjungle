@@ -1,3 +1,4 @@
+import boto3
 import os
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData,text
 from sqlalchemy.exc import SQLAlchemyError
@@ -12,6 +13,8 @@ class GoogleScraper:
         self.host = os.getenv('db_host')
         self.password = os.getenv('db_password')
         self.database = os.getenv('db_database')
+        self.cred_bucket = os.getenv('cred_bucket')
+        self.cred_key = os.getenv('cred_key')
         self.engine = create_engine(
             f"postgresql://{self.user}:{self.password}@{self.host}/{self.database}",
             echo=True
@@ -33,10 +36,22 @@ class GoogleScraper:
         self.metadata.create_all(self.engine)
 
 
+    def get_secret_from_s3(self,bucket_name, key):
+        try:
+            s3 = boto3.client('s3')
+            response = s3.get_object(Bucket=bucket_name, Key=key)
+            return response['Body'].read().decode('utf-8')
+        except Exception as e:
+            print(f"Error fetching secret from S3: {e}")
+            return None
+
     def authenticate_google_sheets(self):
         scope = ["https://www.googleapis.com/auth/spreadsheets.readonly",
                  "https://www.googleapis.com/auth/drive.readonly"]
-        creds = Credentials.from_service_account_file("google_credentials.json", scopes=scope)
+        credentials_json = self.get_secret_from_s3(self.cred_bucket, self.cred_key)
+        with open('/tmp/token.json', 'w') as creds_file:
+            creds_file.write(credentials_json)
+        creds = Credentials.from_service_account_file("/tmp/token.json", scopes=scope)
         client = gspread.authorize(creds)
         return client
 
@@ -84,6 +99,21 @@ class GoogleScraper:
         RANGE_NAME = 'BowTiedList'
         data = self.get_sheet_data(SHEET_ID, RANGE_NAME)
         self.update_database(data)
+
+def lambda_handler(event,context):
+    print(event)
+    try:
+        scraper = GoogleScraper()
+        scraper.main() 
+        return {
+            'status': 200,
+            'data': 'Done'
+        }
+    except Exception as e:
+        return {
+            'status': 500,
+            'error': str(e)
+        }
 
 if __name__ == "__main__":
     scraper = GoogleScraper()

@@ -33,6 +33,10 @@ Parameters:
     Type: String
   STRIPESECRETKEY:
     Type: String
+  CREDBUCKET:
+    Type: String
+  CREDKEY:
+    Type: String
   # STRIPEWEBHOOKKEY:
   #   Type: String
   # STRIPECONNECTWEBHOOKKEY:
@@ -103,10 +107,6 @@ Resources:
       Architectures: 
         - x86_64
       Description: List out most recent substack posts
-      Layers:
-        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
-        - arn:aws:lambda:us-east-1:360548816597:layer:requests-2-31-0-py310-x86:1 
-        - arn:aws:lambda:us-east-1:360548816597:layer:feedparser-6-0-11-py310-x86:1
       Environment:
         Variables:
           db_username: !Ref DBUSERNAME
@@ -122,34 +122,29 @@ Resources:
             Path: /posts
             Method: get 
 
-
-  ServerlessTelegramBot:
+  UpdateDbWithGoogleSheet:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
-      FunctionName: !Sub "bowtiedlist_${STAGE}"
-      Handler: get_members.lambda_handler
+      FunctionName: !Sub "bowtiedlist_update_${STAGE}"
+      Handler: update_bowtied_list.lambda_handler
       Runtime: python3.10
       Architectures: 
         - x86_64
-      Description: List out activate members of bowtied list who have signed up
-      Layers:
-        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
-        - arn:aws:lambda:us-east-1:360548816597:layer:requests-2-31-0-py310-x86:1 
+      Description: Scrapes the bowtied list and updates it
       Environment:
         Variables:
           db_username: !Ref DBUSERNAME
           db_password: !Ref DBPASSWORD
           db_host: !Ref DBHOST
           db_database: !Ref DBDATABASE
+          cred_bucket: !Ref CREDBUCKET
+          cred_key: !Ref CREDKEY
       Events:
-        ApiEvent:
-          Type: Api
+        HourTrigger:
+          Type: Schedule
           Properties:
-            RestApiId:
-              Ref: ApiGatewayBackend
-            Path: /members
-            Method: post
+            Schedule: cron(0 * * * ? *)
       Policies:
         Statement:
           - Effect: Allow
@@ -163,6 +158,48 @@ Resources:
               - logs:PutLogEvents
             Resource:
               - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+              - !Sub "arn:aws:s3:::${CREDBUCKET}"
+              - !Sub "arn:aws:s3:::${CREDBUCKET}/*"
+
+
+
+  # ServerlessTelegramBot:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: src/
+  #     FunctionName: !Sub "bowtiedlist_${STAGE}"
+  #     Handler: get_members.lambda_handler
+  #     Runtime: python3.10
+  #     Architectures: 
+  #       - x86_64
+  #     Description: List out activate members of bowtied list who have signed up
+  #     Environment:
+  #       Variables:
+  #         db_username: !Ref DBUSERNAME
+  #         db_password: !Ref DBPASSWORD
+  #         db_host: !Ref DBHOST
+  #         db_database: !Ref DBDATABASE
+  #     Events:
+  #       ApiEvent:
+  #         Type: Api
+  #         Properties:
+  #           RestApiId:
+  #             Ref: ApiGatewayBackend
+  #           Path: /members
+  #           Method: post
+  #     Policies:
+  #       Statement:
+  #         - Effect: Allow
+  #           Action: 
+  #             - logs:CreateLogGroup
+  #           Resource: 
+  #             - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+  #         - Effect: Allow
+  #           Action:
+  #             - logs:CreateLogStream
+  #             - logs:PutLogEvents
+  #           Resource:
+  #             - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
 
 ######## STRIPE ###########
   # StripeFunction:
@@ -232,8 +269,6 @@ Resources:
       Architectures: 
         - x86_64
       Description: Grabs information on the seller
-      Layers:
-        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1
       Events:
         ApiEvent:
           Type: Api
@@ -319,8 +354,6 @@ Resources:
       Architectures: 
         - x86_64
       Description: Creates a stripe express account and returns account link
-      Layers:
-        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1 
       Environment:
         Variables:
           stage: !Ref STAGE
@@ -359,9 +392,7 @@ Resources:
       Runtime: python3.10
       Architectures: 
         - x86_64
-      Description: Gives the account a url to manage their account
-      Layers:
-        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1 
+      Description: Gives the account a url to manage their account 
       Environment:
         Variables:
           stripe_secret_key: !Ref STRIPESECRETKEY
@@ -488,9 +519,6 @@ Resources:
       Architectures: 
         - x86_64
       Description: Creates the payment link for the price
-      Layers:
-        - arn:aws:lambda:us-east-1:360548816597:layer:stripe-5-5-0-py310-x86:1
-        - arn:aws:lambda:us-east-1:360548816597:layer:psycopg2-binary-2-9-7-py310-x86:1 
       Environment:
         Variables:
           db_username: !Ref DBUSERNAME
