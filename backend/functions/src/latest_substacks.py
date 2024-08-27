@@ -48,8 +48,13 @@ def lambda_handler(event,context):
         # dict_keys(['bozo', 'entries', 'feed', 'headers', 'etag', 'href', 'status', 'encoding', 'version', 'namespaces'])
         for url in rawrss:
             feed = feedparser.parse(url)
+            feed_info = feed.feed
+            name = feed_info.title
+            # Extract the image URL
+            if 'image' in feed_info and 'href' in feed_info['image']:
+                image_url = feed_info['image']['href']
             for post in feed.entries:
-                posts.append({'id':post.id,'title': post.title, 'link': post.link, 'summary': post.summary, 'detail': post.summary_detail, 'published': post.published})
+                posts.append({'name':name,'image_url':image_url,'id':post.id,'title': post.title, 'link': post.link, 'summary': post.summary, 'detail': post.summary_detail, 'published': post.published})
         
         return {
                 'statusCode': 200,
