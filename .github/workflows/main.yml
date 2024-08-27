@@ -63,7 +63,7 @@ jobs:
       run: |
         if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
           echo "STACK_NAME=bowtiedjungle-backend-dev" >> $GITHUB_ENV
-          echo "FRONT_END_BUCKET=${{ secrets.FRONT_END_APP_BUCKET_DEV }}" >> $GITHUB_ENV
+          echo "FRONT_END_APP_BUCKET=${{ secrets.FRONT_END_APP_BUCKET_DEV }}" >> $GITHUB_ENV
           echo "BACKEND_BUCKET"=${{ secrets.BACKEND_BUCKET_DEV }}"" >> $GITHUB_ENV
           echo "STAGE=dev" >> $GITHUB_ENV
           echo "APIDOMAINSUFFIX=apidev" >> $GITHUB_ENV
