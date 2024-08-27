@@ -156,6 +156,8 @@ Resources:
             Action:
               - logs:CreateLogStream
               - logs:PutLogEvents
+              - s3:ListBucket
+              - s3:GetObject
             Resource:
               - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
               - !Sub "arn:aws:s3:::${CREDBUCKET}"
