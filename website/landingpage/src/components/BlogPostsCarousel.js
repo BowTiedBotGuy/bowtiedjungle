@@ -42,7 +42,6 @@ const BlogPostsCarousel = ({ posts }) => {
             <Slider {...settings}>
                 {posts.slice(0, 5).map(post => (
                     <div key={post.id} className="container mx-auto flex flex-wrap justify-center">
-                        {console.log(post)}
                     <Card key={post.name} member={post} />
                     <div key={post.id} className="p-4">
                         <div className="max-w-md rounded overflow-hidden shadow-lg">

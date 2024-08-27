@@ -15,7 +15,7 @@ jobs:
       STACK_NAME: 'bowtiedjungle' # default stack
       FRONT_END_LANDING_PAGE_BUCKET: ${{ secrets.FRONT_END_LANDING_PAGE_BUCKET }}  # landing page
       FRONT_END_APP_BUCKET: ${{ secrets.FRONT_END_APP_BUCKET }}
-      BACK_END_BUCKET: ${{ secrets.BACKEND_BUCKET }} 
+      BACKEND_BUCKET: ${{ secrets.BACKEND_BUCKET }} 
       STAGE: prd
       APIDOMAINSUFFIX: api
       USERPOOLID: ${{ secrets.USERPOOL_ID }}
