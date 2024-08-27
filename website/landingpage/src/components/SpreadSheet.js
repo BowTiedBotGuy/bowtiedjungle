@@ -1,49 +1,31 @@
-import React, { useState } from 'react';
-import Spreadsheet from 'react-spreadsheet';
+import React from 'react';
 import Navbar from './NavBar';
 
-const SpreadsheetComponent = () => {
-  // Initial data for the spreadsheet
-  const initialData = [
-    [{ value: "ID" }, { value: "Title" }, { value: "Count" }],
-    [{ value: 1 }, { value: "Item 1" }, { value: 100 }],
-    [{ value: 2 }, { value: "Item 2" }, { value: 200 }]
-  ];
-
-  const [data, setData] = useState(initialData);
-
-  const handleSave = async () => {
-    try {
-      const response = await fetch('/api/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data }),
-      });
-      const result = await response.json();
-      console.log(result.message);
-    } catch (error) {
-      console.error('Error saving data:', error);
-    }
-  };
+const SpeadSheet = () => {
+  const iframeSrc = "https://docs.google.com/spreadsheets/d/1cQ0rZ7nDSJlfIPNZ97le52M3mcvZdRsn3t4QAV13Eos/pubhtml?gid=0&amp;single=true&amp;widget=true&amp;headers=false";
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div>
       <Navbar />
-      <div className="p-4 md:p-8">
-        <h1 className="text-xl font-semibold mb-4">My Spreadsheet</h1>
-        <div className="bg-white shadow-md rounded-lg p-2">
-          <Spreadsheet data={data} onChange={setData} />
-          <button
-            onClick={handleSave}
-            className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Save
-          </button>
-        </div>
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <a href='https://docs.google.com/spreadsheets/d/1cQ0rZ7nDSJlfIPNZ97le52M3mcvZdRsn3t4QAV13Eos/edit?usp=sharing'
+           style={{ fontSize: '24px', color: 'blue', textDecoration: 'none', fontWeight: 'bold' }}
+           target="_blank" rel="noopener noreferrer">
+          Editable Version
+        </a>
       </div>
+    <div style={{ width: '100%', height: '500px', overflow: 'hidden' }}>
+      <iframe title="BowTiedList"
+        src={iframeSrc}
+        width="100%"
+        height="100%"
+        style={{ border: 'none' }}
+        allowFullScreen
+      ></iframe>
+    </div>
     </div>
   );
 };
 
-export default SpreadsheetComponent;
+export default SpeadSheet;
+
