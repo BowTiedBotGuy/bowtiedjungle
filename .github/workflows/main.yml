@@ -63,7 +63,7 @@ jobs:
       run: |
         if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
           echo "STACK_NAME=bowtiedjungle-backend-dev" >> $GITHUB_ENV
-          echo "FRONT_END_BUCKET=${{ secrets.FRONT_END_APP_BUCKET_DEV }}" >> $GITHUB_ENV
+          echo "FRONT_END_APP_BUCKET=${{ secrets.FRONT_END_APP_BUCKET_DEV }}" >> $GITHUB_ENV
           echo "BACKEND_BUCKET"=${{ secrets.BACKEND_BUCKET_DEV }}"" >> $GITHUB_ENV
           echo "STAGE=dev" >> $GITHUB_ENV
           echo "APIDOMAINSUFFIX=apidev" >> $GITHUB_ENV
@@ -88,27 +88,35 @@ jobs:
    # Create .env file
     - name: Set Environment Variables For React
       run: |
-        cd website/landingpage
-        echo "REACT_APP_ENV=${{ env.STAGE }}" >> .env
-        echo "REACT_APP_DOMAIN_SUFFIX=${{ env.APIDOMAINSUFFIX }}" >> .env
-        echo "REACT_APP_AWS_USER_POOLS_ID=${{ env.USERPOOLID }}" >> .env
-        echo "REACT_APP_AWS_COGNITO_IDENTITY_POOL_ID=${{ env.COGNITOIDENTITYPOOL }}" >> .env 
-        echo "REACT_APP_AWS_USER_POOLS_WEB_CLIENT_ID=${{ env.USER_POOLS_WEB_CLIENT_ID }}" >> .env
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          cd website/landingpage
+          echo "REACT_APP_ENV=${{ env.STAGE }}" >> .env
+          echo "REACT_APP_DOMAIN_SUFFIX=${{ env.APIDOMAINSUFFIX }}" >> .env
+          echo "REACT_APP_AWS_USER_POOLS_ID=${{ env.USERPOOLID }}" >> .env
+          echo "REACT_APP_AWS_COGNITO_IDENTITY_POOL_ID=${{ env.COGNITOIDENTITYPOOL }}" >> .env 
+          echo "REACT_APP_AWS_USER_POOLS_WEB_CLIENT_ID=${{ env.USER_POOLS_WEB_CLIENT_ID }}" >> .env
+        fi
 
     - name: Install dependencies landing page
       run: |
-        cd website/landingpage
-        npm install
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          cd website/landingpage
+          npm install
+        fi
 
     - name: Build folder
       run: |
-        cd website/landingpage
-        npm run build
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then 
+          cd website/landingpage
+          npm run build
+        fi
 
     - name: Copy files to frontend site
       run: |
-        cd website/landingpage
-        aws s3 sync './build' ${{ env.FRONT_END_LANDING_PAGE_BUCKET }}
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          cd website/landingpage
+          aws s3 sync './build' ${{ env.FRONT_END_LANDING_PAGE_BUCKET }}
+        fi
 
 ######## FRONT END APP #######
    # Create .env file
