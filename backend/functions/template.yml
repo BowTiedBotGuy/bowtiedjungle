@@ -169,7 +169,7 @@ Resources:
         HourTrigger:
           Type: Schedule
           Properties:
-            Schedule: cron(*/5 * * * ? *)  # Triggers every 5 minutes
+            Schedule: cron(* * * * ? *)  # Triggers every minutes
       Policies:
         Statement:
           - Effect: Allow
