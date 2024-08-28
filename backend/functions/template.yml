@@ -169,7 +169,11 @@ Resources:
         HourTrigger:
           Type: Schedule
           Properties:
-            Schedule: cron(* * * * ? *)  # Triggers every minutes
+            Schedule:
+              !If
+                - IsProd
+                - "cron(* * * * ? *)"  # Every minute for prod
+                - "cron(0 * * * ? *)"  # Every hour for dev
       Policies:
         Statement:
           - Effect: Allow
