@@ -33,7 +33,7 @@ Parameters:
     Type: String
   STRIPESECRETKEY:
     Type: String
-  CREDBUCKET:
+  BUCKET:
     Type: String
   CREDKEY:
     Type: String
@@ -97,6 +97,31 @@ Resources:
         HostedZoneId: !GetAtt ApiDomain.DistributionHostedZoneId
 
 ######## API CALLS #########
+  BowTiedList:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub "bowtiedlist_${STAGE}"
+      Handler: query_bowtiedlist.lambda_handler
+      Runtime: python3.10
+      Architectures: 
+        - x86_64
+      Description: List out bowtiedlist
+      Environment:
+        Variables:
+          db_username: !Ref DBUSERNAME
+          db_password: !Ref DBPASSWORD
+          db_host: !Ref DBHOST
+          db_database: !Ref DBDATABASE
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayBackend
+            Path: /bowtiedlist
+            Method: get 
+
   LatestSubstackPosts:
     Type: AWS::Serverless::Function
     Properties:
@@ -138,13 +163,13 @@ Resources:
           db_password: !Ref DBPASSWORD
           db_host: !Ref DBHOST
           db_database: !Ref DBDATABASE
-          cred_bucket: !Ref CREDBUCKET
+          bucket: !Ref BUCKET
           cred_key: !Ref CREDKEY
       Events:
         HourTrigger:
           Type: Schedule
           Properties:
-            Schedule: cron(0 * * * ? *)
+            Schedule: cron(* * * * ? *)
       Policies:
         Statement:
           - Effect: Allow
@@ -158,10 +183,11 @@ Resources:
               - logs:PutLogEvents
               - s3:ListBucket
               - s3:GetObject
+              - s3:PutObject
             Resource:
               - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
-              - !Sub "arn:aws:s3:::${CREDBUCKET}"
-              - !Sub "arn:aws:s3:::${CREDBUCKET}/*"
+              - !Sub "arn:aws:s3:::${BUCKET}"
+              - !Sub "arn:aws:s3:::${BUCKET}/*"
 
 
 
