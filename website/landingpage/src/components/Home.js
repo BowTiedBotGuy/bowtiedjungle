@@ -1,7 +1,7 @@
 import React from 'react';
 import Navbar from './NavBar';
 import Hero from './Hero';
-import LatestPosts from './LatestPosts'
+import BowTiedList from './BowTiedList'
 
 
 const Home = () => {
@@ -9,7 +9,7 @@ const Home = () => {
     <div>
       <Navbar />
       <Hero />
-      <LatestPosts />
+      <BowTiedList />
     </div>
   );
 };

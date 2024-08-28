@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Modal from './Modal';
+// import Modal from './Modal';
 
 // CSS
 import '../Search.css'; 
 
 const Navbar = () => {
-  const [isModalOpen, setModalOpen] = useState(false);
+//   const [isModalOpen, setModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
 
   const handleSearchChange = (event) => {
@@ -25,7 +25,7 @@ const Navbar = () => {
         <div className="container mx-auto flex justify-between items-center">
           <div>
             <Link to="/" className="text-lg font-bold mr-4">BowTiedList</Link>
-            <Link to="/spreadsheet" className="text-lg font-bold mr-4">Spreadsheet</Link>
+            
           </div>
           <form onSubmit={handleSearchSubmit} className="search-form">
             <input
@@ -37,16 +37,17 @@ const Navbar = () => {
             />
             <button type="submit" className="search-button">Search</button>
           </form>
-          <div>
+          <Link to="/spreadsheet" className="ml-4 bg-red-500 text-white cursor-pointer py-2 px-4 rounded">Spreadsheet</Link>
+          {/* <div>
             <button
               onClick={() => setModalOpen(true)}
               className="ml-4 bg-red-500 text-white cursor-pointer py-2 px-4 rounded">
               Sign Up
             </button>
-          </div>
+          </div> */}
         </div>
       </nav>
-      <Modal isOpen={isModalOpen} closeModal={() => setModalOpen(false)} />
+      {/* <Modal isOpen={isModalOpen} closeModal={() => setModalOpen(false)} /> */}
     </>
   );
 };
