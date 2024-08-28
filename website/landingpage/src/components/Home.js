@@ -1,17 +1,23 @@
-import React from 'react';
+import React , {useState} from 'react';
 import Navbar from './NavBar';
 import Hero from './Hero';
-import LatestPosts from './LatestPosts'
+import BowTiedList from './BowTiedList'
 
 
 const Home = () => {
-  return (
-    <div>
-      <Navbar />
-      <Hero />
-      <LatestPosts />
-    </div>
-  );
+    const [searchInput, setSearchInput] = useState('');
+
+    const handleSearchChange = (input) => {
+    setSearchInput(input);
+    };
+
+    return (
+        <div>
+        <Navbar onSearchChange={handleSearchChange}/>
+        <Hero />
+        <BowTiedList searchInput={searchInput} />
+        </div>
+    );
 };
 
 export default Home

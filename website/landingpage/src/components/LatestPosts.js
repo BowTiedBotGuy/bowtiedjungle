@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import API from '../services/API';
 import BlogPostsCarousel from './BlogPostsCarousel';
-import LoadingBar from './LoadingBar';  // Assuming you create this component
+import LoadingBar from './LoadingBar';
 
 const LatestPosts = () => {
     const [posts, setPosts] = useState([]);
