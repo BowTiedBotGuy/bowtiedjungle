@@ -89,7 +89,7 @@ class GoogleScraper:
                         'handle': row.get('X Handle'),
                         'category': row.get('Categories (Seperated By Commas)'),
                         'substack': row.get('Substack'),
-                        'product': row.get('Products / Serivces')
+                        'product': row.get('Products / Services')
                     })
                     connection.commit()
                 except SQLAlchemyError as e:
