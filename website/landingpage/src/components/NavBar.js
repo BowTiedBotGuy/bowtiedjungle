@@ -20,21 +20,28 @@ const Navbar = ({ onSearchChange }) => {
   return (
     <>
       <nav className="bg-gray-800 text-white p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <div>
-            <Link to="/" className="text-lg font-bold mr-4">BowTiedList</Link>
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
+          {/* Home Link */}
+          <div className="w-full md:w-auto mb-2 md:mb-0">
+            <Link to="/" className="text-lg font-bold block text-center md:text-left">BowTiedList</Link>
           </div>
-          <form onSubmit={handleSearchSubmit} className="search-form">
+          {/* Search Form */}
+          <form onSubmit={handleSearchSubmit} className="w-full md:w-auto mb-2 md:mb-0 flex justify-center md:justify-start">
             <input
               type="text"
               value={searchInput}
               onChange={handleSearchChange}
               placeholder="Search categories/members"
-              className="search-input"
+              className="w-full md:w-64 p-2 text-black rounded"
             />
-            <button type="submit" className="search-button">Search</button>
           </form>
-          <Link to="/spreadsheet" className="ml-4 bg-red-500 text-white cursor-pointer py-2 px-4 rounded">Spreadsheet</Link>
+          {/* Spreadsheet Link */}
+          <Link
+            to="/spreadsheet"
+            className="w-full md:w-auto bg-red-500 text-white cursor-pointer py-2 px-4 rounded text-center"
+          >
+            Spreadsheet
+          </Link>
         </div>
       </nav>
     </>
