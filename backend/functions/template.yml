@@ -172,7 +172,7 @@ Resources:
             Schedule:
               !If
                 - IsProd
-                - "cron(* * * * ? *)"  # Every minute for prod
+                - "cron(0/10 * * * ? *)"  # Every 10 minutes for prod
                 - "cron(0 * * * ? *)"  # Every hour for dev
       Policies:
         Statement:
